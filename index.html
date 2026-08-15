@@ -1,0 +1,186 @@
+
+<!DOCTYPE html>
+<html class="light" lang="tr">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Numune Detayları Yönetimi</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <!-- JPG Kaydetme için html2canvas kütüphanesi -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#2b8cee",
+              "background-light": "#f6f7f8",
+              "background-dark": "#101922",
+              "card-light": "#ffffff",
+              "card-dark": "#1a2634",
+              "text-primary-light": "#0d141b",
+              "text-primary-dark": "#ffffff",
+              "text-secondary-light": "#4c739a",
+              "text-secondary-dark": "#94a3b8",
+            },
+            fontFamily: {
+              "display": ["Manrope", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+    <style>
+        body {
+            font-family: 'Manrope', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings:
+            'FILL' 0,
+            'wght' 400,
+            'GRAD' 0,
+            'opsz' 24
+        }
+
+        /* Kart Boyutlandırma (Resizable) */
+        .resizable-card {
+            resize: both;
+            overflow: auto;
+            min-height: 400px;
+        }
+        
+        /* JPG YAKALAMA MODU (WHATSAPP UYUMLU DARALTILMIŞ BOYUT) */
+        .capture-mode {
+            width: 850px !important;
+            max-width: 850px !important;
+            min-width: 850px !important;
+            padding: 25px !important;
+            display: flex !important;
+            flex-direction: column !important;
+            background: #ffffff !important;
+            color: #000000 !important;
+            position: relative !important;
+            height: auto !important;
+            overflow: visible !important;
+        }
+        
+        .capture-mode .grid-container {
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: stretch !important;
+            justify-content: center !important;
+            gap: 15px !important;
+            width: 100% !important;
+            margin: 0 !important;
+        }
+
+        /* Sol Sütun (Resim) - %52 (WhatsApp'ta resim daha önemli) */
+        .capture-mode .grid-container > div:first-child {
+            width: 52% !important;
+            flex: 0 0 52% !important;
+            max-width: 52% !important;
+            display: block !important;
+            margin: 0 !important;
+        }
+
+        /* Sağ Sütun (Form) - %48 */
+        .capture-mode .grid-container > div:last-child {
+            width: 48% !important;
+            flex: 0 0 48% !important;
+            max-width: 48% !important;
+            display: block !important;
+            margin: 0 !important;
+        }
+
+        .capture-mode .resizable-card {
+            resize: none !important;
+            width: 100% !important;
+            height: auto !important;
+            aspect-ratio: auto !important; /* Full Boy Resim İçin */
+            min-height: unset !important;
+            overflow: visible !important;
+            border: 2px solid #e2e8f0 !important;
+            box-shadow: none !important;
+            background: #ffffff !important;
+            border-radius: 20px !important;
+        }
+        
+        .capture-mode .resizable-card img {
+            object-fit: contain !important;
+            position: relative !important;
+            height: auto !important;
+        }
+
+        .capture-mode label {
+            font-weight: 800 !important;
+            font-size: 10px !important;
+            color: #64748b !important;
+            text-transform: uppercase !important;
+            margin-bottom: 2px !important;
+            display: block !important;
+        }
+
+        .capture-mode .input-replacement {
+            background-color: #f8fafc !important;
+            border: 1px solid #e2e8f0 !important;
+            color: #0f172a !important;
+            font-weight: 700 !important;
+            font-size: 13px !important;
+            padding: 5px 10px !important;
+            border-radius: 8px !important;
+            width: 100% !important;
+            display: flex !important;
+            align-items: center !important;
+            min-height: 32px !important;
+        }
+
+        .capture-mode [data-field="model-code"] .input-replacement {
+            color: #2563eb !important;
+            border-color: #bfdbfe !important;
+            font-size: 16px !important;
+            background-color: #eff6ff !important;
+        }
+
+        .capture-mode .absolute.inset-y-0.left-0,
+        .capture-mode header, 
+        .capture-mode nav, 
+        .capture-mode button:not(.status-badge):not(.onay-mühür),
+        .capture-mode .print\:hidden:not(img) {
+            display: none !important;
+        }
+        
+        .capture-mode input, .capture-mode select, .capture-mode textarea { 
+            display: none !important; 
+        }
+
+        @media print {
+            @page { size: landscape; margin: 5mm; }
+            body { background: white !important; print-color-adjust: exact; }
+            #root { display: block !important; width: 100% !important; }
+            .pdf-layout { display: flex !important; flex-direction: row-reverse !important; gap: 1rem !important; }
+        }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2",
+    "@google/genai": "https://esm.sh/@google/genai@^1.34.0"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body class="bg-background-light dark:bg-background-dark min-h-screen flex flex-col font-display transition-colors duration-200">
+    <div id="root" class="flex flex-col min-h-screen"></div>
+<script type="module" src="/index.tsx"></script>
+</body>
+</html>
