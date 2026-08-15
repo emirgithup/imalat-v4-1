@@ -60,19 +60,25 @@ export const Header: React.FC<HeaderProps> = ({
         </nav>
       </div>
       <div className="flex flex-1 justify-end gap-4 items-center">
-        <label className="hidden md:flex flex-col min-w-40 h-10 w-64 group">
-          <div className="flex w-full flex-1 items-stretch rounded-lg h-full border border-slate-200 dark:border-slate-700 bg-background-light dark:bg-background-dark group-focus-within:border-primary group-focus-within:ring-1 group-focus-within:ring-primary transition-all">
-            <div className="text-text-secondary-light dark:text-text-secondary-dark flex items-center justify-center pl-3">
-              <span className="material-symbols-outlined text-[20px]">search</span>
-            </div>
-            <input 
-              className="flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg bg-transparent border-none focus:ring-0 text-text-primary-light dark:text-text-primary-dark placeholder:text-text-secondary-light/70 dark:placeholder:text-text-secondary-dark/70 px-3 text-sm font-normal leading-normal" 
-              placeholder="Model kodu ara..." 
-              value={searchTerm}
-              onChange={(e) => onSearch?.(e.target.value)}
-            />
-          </div>
-        </label>
+        <div className="hidden md:flex items-center min-w-48 w-72 h-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-background-light dark:bg-background-dark focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-all px-3 gap-2">
+          <span className="material-symbols-outlined text-[20px] text-text-secondary-light dark:text-text-secondary-dark shrink-0">search</span>
+          <input 
+            className="w-full bg-transparent border-none p-0 focus:outline-none focus:ring-0 text-text-primary-light dark:text-text-primary-dark placeholder:text-text-secondary-light/70 dark:placeholder:text-text-secondary-dark/70 text-sm font-medium" 
+            placeholder="Model kodu / müşteri ara..." 
+            value={searchTerm}
+            onChange={(e) => onSearch?.(e.target.value)}
+          />
+          {searchTerm && (
+            <button 
+              type="button"
+              onClick={() => onSearch?.("")} 
+              className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors p-0.5 rounded-full"
+              title="Aramayı Temizle"
+            >
+              <span className="material-symbols-outlined text-[16px] block">close</span>
+            </button>
+          )}
+        </div>
         
         <div className="relative">
           <button 

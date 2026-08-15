@@ -597,7 +597,14 @@ const App: React.FC = () => {
         </main>
       ) : (
         <main className="flex-1 w-full max-w-[1440px] mx-auto p-4 md:p-6 lg:p-10">
-          <ReportsPage userId={currentUser.id} onEdit={handleEditSample} searchTerm={searchTerm} onNotify={showNotification} isAdmin={isAdmin} />
+          <ReportsPage 
+            userId={currentUser.id} 
+            onEdit={handleEditSample} 
+            searchTerm={searchTerm} 
+            onSearchChange={setSearchTerm}
+            onNotify={showNotification} 
+            isAdmin={isAdmin} 
+          />
         </main>
       )}
 

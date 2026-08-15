@@ -8,13 +8,124 @@ interface ReportsPageProps {
   userId: string;
   onEdit: (data: SampleData) => void;
   searchTerm?: string;
+  onSearchChange?: (term: string) => void;
   onNotify?: (message: string, type?: 'success' | 'error') => void;
   isAdmin?: boolean;
 }
 
-export const ReportsPage: React.FC<ReportsPageProps> = ({ userId, onEdit, searchTerm = "", onNotify, isAdmin = false }) => {
+// Türkçe karakter ve özel işaret duyarsız gelişmiş metin normalleştirici
+const normalizeSearchText = (str: string = ''): string => {
+  if (!str) return '';
+  return str
+    .toString()
+    .trim()
+    .toLocaleLowerCase('tr-TR')
+    .replace(/ğ/g, 'g')
+    .replace(/ü/g, 'u')
+    .replace(/ş/g, 's')
+    .replace(/ı/g, 'i')
+    .replace(/ö/g, 'o')
+    .replace(/ç/g, 'c')
+    .replace(/i̇/g, 'i')
+    .replace(/â|á|à|ä/g, 'a')
+    .replace(/ê|é|è|ë/g, 'e')
+    .replace(/î|í|ì|ï/g, 'i')
+    .replace(/ô|ó|ò|ö/g, 'o')
+    .replace(/û|ú|ù|ü/g, 'u');
+};
+
+const stripNonAlphanumeric = (str: string = ''): string => {
+  return normalizeSearchText(str).replace(/[^a-z0-9]/g, '');
+};
+
+const isSearchMatch = (sample: SampleData, term: string): boolean => {
+  if (!term || !term.trim()) return true;
+
+  const rawTerm = term.trim();
+  const normTerm = normalizeSearchText(rawTerm);
+  const cleanTerm = stripNonAlphanumeric(rawTerm);
+
+  const modelCode = sample.modelCode || '';
+  const customerName = sample.customerName || '';
+  const firmName = sample.firmName || '';
+  const notes = sample.notes || '';
+  const yarnType = sample.yarnType || '';
+  const yarnManufacturer = sample.yarnManufacturer || '';
+  const size = sample.size || '';
+  const date = sample.date || '';
+
+  const normFields = [
+    normalizeSearchText(modelCode),
+    normalizeSearchText(customerName),
+    normalizeSearchText(firmName),
+    normalizeSearchText(notes),
+    normalizeSearchText(yarnType),
+    normalizeSearchText(yarnManufacturer),
+    normalizeSearchText(size),
+    normalizeSearchText(date)
+  ];
+
+  const cleanFields = [
+    stripNonAlphanumeric(modelCode),
+    stripNonAlphanumeric(customerName),
+    stripNonAlphanumeric(firmName),
+    stripNonAlphanumeric(notes),
+    stripNonAlphanumeric(yarnType),
+    stripNonAlphanumeric(yarnManufacturer),
+    stripNonAlphanumeric(size),
+    stripNonAlphanumeric(date)
+  ];
+
+  const combinedNorm = normFields.join(' ');
+  const combinedClean = cleanFields.join('');
+
+  // 1. Doğrudan kelime/cümle araması
+  if (combinedNorm.includes(normTerm)) return true;
+
+  // 2. Harf ve rakam birleşik araması (tire, boşluk, eğik çizgi gözetmeksizin)
+  // örn: MD-2024 veya MD 2024 arandığında 'md2024' olarak model kodunda bulunur
+  if (cleanTerm) {
+    if (cleanFields[0].includes(cleanTerm)) return true; // Öncelikle Model Kodu içinde
+    if (combinedClean.includes(cleanTerm)) return true;   // Diğer alanlarda
+  }
+
+  // 3. Çoklu kelime/parça eşleşmesi (tüm yazılan kelimeler herhangi bir alanda geçiyor mu)
+  const tokens = normTerm.split(/\s+/).filter(Boolean);
+  const cleanTokens = tokens.map(t => stripNonAlphanumeric(t)).filter(Boolean);
+
+  if (tokens.length > 1) {
+    const allTokensMatch = tokens.every((token, idx) => {
+      const cToken = cleanTokens[idx];
+      return combinedNorm.includes(token) || (cToken && combinedClean.includes(cToken));
+    });
+    if (allTokensMatch) return true;
+  }
+
+  // 4. Model kodundaki numara parçalarını eşleme (örn: 2024 yazıldığında MD-2024-V1 yakalanır)
+  const numbersInTerm = rawTerm.match(/\d+/g);
+  if (numbersInTerm && numbersInTerm.length > 0) {
+    const allNumbersInModelCode = numbersInTerm.every(num => cleanFields[0].includes(num));
+    const textTokens = tokens.filter(t => !/^\d+$/.test(t));
+    if (allNumbersInModelCode && (textTokens.length === 0 || textTokens.every(w => combinedNorm.includes(w)))) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
+export const ReportsPage: React.FC<ReportsPageProps> = ({ 
+  userId, 
+  onEdit, 
+  searchTerm = "", 
+  onSearchChange,
+  onNotify, 
+  isAdmin = false 
+}) => {
   const [samples, setSamples] = useState<SampleData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedCustomer, setSelectedCustomer] = useState<string>('ALL');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'APPROVED' | 'PENDING'>('ALL');
   const [isCapturing, setIsCapturing] = useState<string | null>(null);
   const [fullImageModal, setFullImageModal] = useState<string | null>(null);
   const [imageScale, setImageScale] = useState(1);
@@ -124,19 +235,57 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ userId, onEdit, search
 
   useEffect(() => { if (userId) fetchSamples(); }, [userId]);
 
-  const filteredSamples = useMemo(() => {
-    const normalizeForSearch = (str: string) => 
-      (str || '').toLocaleLowerCase('tr-TR').trim();
+  // Dinamik Müşteri Listesi ve Numune Sayıları
+  const customerList = useMemo(() => {
+    const counts: Record<string, number> = {};
+    let unnamedCount = 0;
 
-    const term = normalizeForSearch(searchTerm);
-    if (!term) return samples;
-
-    return samples.filter(s => {
-      const code = normalizeForSearch(s.modelCode);
-      const customer = normalizeForSearch(s.customerName);
-      return code.includes(term) || customer.includes(term);
+    samples.forEach(s => {
+      const cust = (s.customerName || '').trim();
+      if (cust) {
+        counts[cust] = (counts[cust] || 0) + 1;
+      } else {
+        unnamedCount += 1;
+      }
     });
-  }, [samples, searchTerm]);
+
+    const list = Object.entries(counts)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'tr-TR'));
+
+    if (unnamedCount > 0) {
+      list.push({ name: 'Belirtilmemiş', count: unnamedCount });
+    }
+
+    return list;
+  }, [samples]);
+
+  const filteredSamples = useMemo(() => {
+    return samples.filter(s => {
+      // 1. Müşteri Filtresi
+      if (selectedCustomer !== 'ALL') {
+        const cust = (s.customerName || '').trim();
+        if (selectedCustomer === 'Belirtilmemiş') {
+          if (cust !== '') return false;
+        } else {
+          if (cust.toLocaleLowerCase('tr-TR') !== selectedCustomer.toLocaleLowerCase('tr-TR')) {
+            return false;
+          }
+        }
+      }
+
+      // 2. Onay Durumu Filtresi
+      if (statusFilter === 'APPROVED' && !s.isApproved) return false;
+      if (statusFilter === 'PENDING' && s.isApproved) return false;
+
+      // 3. Hassas Model Kodu ve Alan Araması
+      if (searchTerm && searchTerm.trim()) {
+        if (!isSearchMatch(s, searchTerm)) return false;
+      }
+
+      return true;
+    });
+  }, [samples, selectedCustomer, statusFilter, searchTerm]);
 
   const handleGeneratePreview = async (sampleId: string, modelCode: string, customerName: string) => {
     const cardElement = document.getElementById(`sample-card-${sampleId}`);
@@ -682,13 +831,164 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ userId, onEdit, search
         </div>
       )}
 
-      <div className="space-y-8 pb-20">
-        <div className="flex justify-between items-center border-b pb-6">
-          <h2 className="text-3xl font-black text-slate-800 dark:text-white">NUMUNE ARŞİVİ <span className="text-indigo-500">({filteredSamples.length})</span></h2>
+      <div className="space-y-6 pb-20">
+        {/* Başlık ve İstatistik Şerit */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
+          <div className="flex items-center gap-3">
+            <div className="size-10 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-800/50 rounded-xl flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+              <span className="material-symbols-outlined text-[24px]">folder_open</span>
+            </div>
+            <div>
+              <h2 className="text-2xl md:text-3xl font-black text-slate-800 dark:text-white tracking-tight flex items-center gap-2">
+                NUMUNE ARŞİVİ
+                <span className="text-sm font-bold px-2.5 py-1 rounded-full bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
+                  {filteredSamples.length} / {samples.length}
+                </span>
+              </h2>
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                Tüm numuneler, müşteri filtreleri ve anlık hassas model kodu araması
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-300">
+              <span className="material-symbols-outlined text-indigo-500 text-[18px]">group</span>
+              <span>{customerList.length} Müşteri</span>
+            </div>
+            <div className="bg-emerald-50 dark:bg-emerald-950/30 px-3 py-1.5 rounded-xl border border-emerald-200 dark:border-emerald-800 flex items-center gap-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-400">
+              <span className="material-symbols-outlined text-[16px]">check_circle</span>
+              <span>{samples.filter(s => s.isApproved).length} Onaylı</span>
+            </div>
+            <div className="bg-orange-50 dark:bg-orange-950/30 px-3 py-1.5 rounded-xl border border-orange-200 dark:border-orange-800 flex items-center gap-1.5 text-xs font-bold text-orange-700 dark:text-orange-400">
+              <span className="material-symbols-outlined text-[16px]">pending</span>
+              <span>{samples.filter(s => !s.isApproved).length} Beklemede</span>
+            </div>
+          </div>
         </div>
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-6 gap-y-10">
-          {filteredSamples.map((sample) => (
+
+        {/* Gelişmiş Filtre ve Arama Çubuğu */}
+        <div className="bg-white dark:bg-card-dark rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
+            
+            {/* Arama Kutusu */}
+            <div className="md:col-span-6 lg:col-span-5 relative">
+              <div className="flex items-center w-full h-11 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all px-3 gap-2">
+                <span className="material-symbols-outlined text-slate-400 text-[20px] shrink-0">search</span>
+                <input 
+                  type="text"
+                  className="w-full bg-transparent border-none p-0 text-xs md:text-sm font-semibold text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-0"
+                  placeholder="Hassas ara: Model Kodu, Müşteri, İplik, Not..."
+                  value={searchTerm}
+                  onChange={(e) => onSearchChange?.(e.target.value)}
+                />
+                {searchTerm && (
+                  <button 
+                    onClick={() => onSearchChange?.("")}
+                    className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                    title="Aramayı Temizle"
+                  >
+                    <span className="material-symbols-outlined text-[16px] block">close</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Müşteri Seçim Açılır Menüsü */}
+            <div className="md:col-span-4 lg:col-span-4 relative">
+              <div className="relative">
+                <select
+                  value={selectedCustomer}
+                  onChange={(e) => setSelectedCustomer(e.target.value)}
+                  className="w-full h-11 pl-9 pr-8 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 text-xs md:text-sm font-bold text-slate-800 dark:text-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition-all appearance-none cursor-pointer"
+                >
+                  <option value="ALL">🏢 Tüm Müşteriler ({samples.length} Numune)</option>
+                  {customerList.map((c) => (
+                    <option key={c.name} value={c.name}>
+                      {c.name} ({c.count} Numune)
+                    </option>
+                  ))}
+                </select>
+                <span className="material-symbols-outlined text-slate-400 text-[18px] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                  person_pin
+                </span>
+                <span className="material-symbols-outlined text-slate-400 text-[18px] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
+                  expand_more
+                </span>
+              </div>
+            </div>
+
+            {/* Onay Filtresi & Sıfırlama Butonu */}
+            <div className="md:col-span-2 lg:col-span-3 flex items-center justify-end gap-2">
+              <div className="flex bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200 dark:border-slate-700 w-full sm:w-auto">
+                <button
+                  onClick={() => setStatusFilter('ALL')}
+                  className={`flex-1 sm:flex-none px-2.5 py-1 rounded-lg text-xs font-black transition-all ${statusFilter === 'ALL' ? 'bg-white dark:bg-card-dark text-indigo-600 dark:text-indigo-400 shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'}`}
+                >
+                  Tümü
+                </button>
+                <button
+                  onClick={() => setStatusFilter('APPROVED')}
+                  className={`flex-1 sm:flex-none px-2.5 py-1 rounded-lg text-xs font-black transition-all ${statusFilter === 'APPROVED' ? 'bg-emerald-500 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-emerald-600'}`}
+                >
+                  Onaylı
+                </button>
+                <button
+                  onClick={() => setStatusFilter('PENDING')}
+                  className={`flex-1 sm:flex-none px-2.5 py-1 rounded-lg text-xs font-black transition-all ${statusFilter === 'PENDING' ? 'bg-orange-500 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-orange-600'}`}
+                >
+                  Bekleyen
+                </button>
+              </div>
+
+              {(selectedCustomer !== 'ALL' || (searchTerm && searchTerm.trim().length > 0) || statusFilter !== 'ALL') && (
+                <button
+                  onClick={() => {
+                    setSelectedCustomer('ALL');
+                    onSearchChange?.('');
+                    setStatusFilter('ALL');
+                  }}
+                  className="h-11 px-3 rounded-xl bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/50 hover:bg-rose-100 font-bold text-xs flex items-center gap-1 shrink-0 transition-colors"
+                  title="Tüm Filtreleri Temizle"
+                >
+                  <span className="material-symbols-outlined text-[16px]">filter_alt_off</span>
+                  <span className="hidden xl:inline">Sıfırla</span>
+                </button>
+              )}
+            </div>
+
+          </div>
+        </div>
+
+        {/* Sonuç Yoksa Gösterilecek Boş Durum */}
+        {filteredSamples.length === 0 ? (
+          <div className="bg-white dark:bg-card-dark rounded-3xl border border-slate-200 dark:border-slate-800 p-12 text-center flex flex-col items-center justify-center max-w-lg mx-auto shadow-sm my-8">
+            <div className="size-16 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-slate-400 mb-4">
+              <span className="material-symbols-outlined text-[36px]">manage_search</span>
+            </div>
+            <h3 className="text-lg font-black text-slate-800 dark:text-white mb-1">
+              Numune Bulunamadı
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs mb-5 leading-relaxed font-medium">
+              {selectedCustomer !== 'ALL' && `Seçilen Müşteri: "${selectedCustomer}". `}
+              {searchTerm && `Aranan İfade: "${searchTerm}". `}
+              Kriterlere uyan kayıt bulunamadı.
+            </p>
+            <button
+              onClick={() => {
+                setSelectedCustomer('ALL');
+                onSearchChange?.('');
+                setStatusFilter('ALL');
+              }}
+              className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-md flex items-center gap-2"
+            >
+              <span className="material-symbols-outlined text-[18px]">restart_alt</span>
+              <span>Filtreleri Temizle ve Tümünü Göster</span>
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-6 gap-y-10">
+            {filteredSamples.map((sample) => (
             <div key={sample.id} className="flex flex-col gap-3 group">
               
               <div 
@@ -909,6 +1209,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ userId, onEdit, search
             </div>
           ))}
         </div>
+        )}
       </div>
       
       {/* Önizleme Modalı */}
