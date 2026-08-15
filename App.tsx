@@ -90,6 +90,7 @@ const getInitialData = (): SampleData => ({
   yarnType: YarnType.Cotton100,
   buttonSize: "",
   buttonCount: 0,
+  buttonImage: "",
   zipperLength: "",
   notes: "",
   mainImage: "",
@@ -120,7 +121,7 @@ const App: React.FC = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   
   const [resizeSource, setResizeSource] = useState<string | null>(null);
-  const [uploadTarget, setUploadTarget] = useState<'main' | 'weight'>('main');
+  const [uploadTarget, setUploadTarget] = useState<'main' | 'weight' | 'button'>('main');
   const mainRef = useRef<HTMLElement>(null);
   
   const [notification, setNotification] = useState<NotificationState | null>(null);
@@ -177,7 +178,7 @@ const App: React.FC = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   }, []);
 
-  const handleImageUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>, target: 'main' | 'weight' = 'main') => {
+  const handleImageUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>, target: 'main' | 'weight' | 'button' = 'main') => {
     setUploadTarget(target);
     const file = event.target.files?.[0];
     if (file) {
@@ -201,6 +202,9 @@ const App: React.FC = () => {
       const urlWithTimestamp = `${downloadURL}?t=${Date.now()}`;
 
       let parsedWeight: number | null = null;
+      let parsedButtonSize: string | null = null;
+      let parsedButtonCount: number | null = null;
+
       if (uploadTarget === 'weight') {
         try {
           const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || process.env.GEMINI_API_KEY });
@@ -225,6 +229,34 @@ const App: React.FC = () => {
         } catch (e) {
           console.error("Gemini okuma hatası:", e);
         }
+      } else if (uploadTarget === 'button') {
+        try {
+          const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || process.env.GEMINI_API_KEY });
+          const base64Data = resizedDataUrl.split(',')[1];
+          const response = await ai.models.generateContent({
+             model: 'gemini-2.5-flash',
+             contents: [
+                {
+                   role: 'user',
+                   parts: [
+                     { inlineData: { mimeType: 'image/jpeg', data: base64Data } },
+                     { text: 'Bu resimdeki düğme boyunu/çapını (sadece boy numarası örn: 24 veya 18) ve varsa düğme adedini bul. JSON formatında döndür: {"buttonSize": "24", "buttonCount": 5}. Eğer bulamazsan boş obje döndür.' }
+                   ]
+                }
+             ]
+          });
+          const text = response.text?.trim() || "";
+          const cleanJson = text.replace(/```json|```/g, '').trim();
+          const parsed = JSON.parse(cleanJson);
+          if (parsed.buttonSize) {
+            parsedButtonSize = String(parsed.buttonSize).replace(/\(.*?\)/g, '').replace(/boy|mm/gi, '').trim();
+          }
+          if (parsed.buttonCount) {
+            parsedButtonCount = Number(parsed.buttonCount) || null;
+          }
+        } catch (e) {
+          console.error("Gemini düğme okuma hatası:", e);
+        }
       }
 
       setFormData(prev => {
@@ -235,7 +267,7 @@ const App: React.FC = () => {
             mainImageSize: sizeKB,
             mainImageDimensions: dims
           };
-        } else {
+        } else if (uploadTarget === 'weight') {
           return {
             ...prev, 
             weightImage: urlWithTimestamp,
@@ -243,10 +275,22 @@ const App: React.FC = () => {
             weightImageDimensions: dims,
             ...(parsedWeight ? { weight: parsedWeight } : {}) // Update weight if found
           };
+        } else {
+          return {
+            ...prev,
+            buttonImage: urlWithTimestamp,
+            buttonImageSize: sizeKB,
+            buttonImageDimensions: dims,
+            ...(parsedButtonSize ? { buttonSize: parsedButtonSize } : {}),
+            ...(parsedButtonCount ? { buttonCount: parsedButtonCount } : {})
+          };
         }
       });
+
       if (parsedWeight) {
         showNotification(`Resim yüklendi ve gramaj okundu: ${parsedWeight}g`, 'success');
+      } else if (parsedButtonSize || parsedButtonCount) {
+        showNotification(`Düğme resmi yüklendi ve bilgileri okundu!`, 'success');
       } else {
         showNotification("Resim optimize edildi ve başarıyla yüklendi!", 'success');
       }
@@ -277,7 +321,9 @@ const App: React.FC = () => {
       if (!blob) return;
 
       // Determine upload target based on focus or closest container
-      if (target.id === 'weight-input' || target.closest('#weight-container')) {
+      if (target.id === 'button-size-input' || target.id === 'button-count-input' || target.closest('#button-container')) {
+        setUploadTarget('button');
+      } else if (target.id === 'weight-input' || target.closest('#weight-container')) {
         setUploadTarget('weight');
       } else {
         setUploadTarget('main');
@@ -348,6 +394,7 @@ const App: React.FC = () => {
       const currentDate = currentIsoTime.split('T')[0];
       
       const cleanWeightImage = formData.weightImage ? formData.weightImage.split('?')[0] : "";
+      const cleanButtonImage = formData.buttonImage ? formData.buttonImage.split('?')[0] : "";
       let updatedDetails = [...(formData.details || [])];
       
       if (cleanWeightImage) {
@@ -356,6 +403,15 @@ const App: React.FC = () => {
           updatedDetails[wIdx].url = cleanWeightImage;
         } else {
           updatedDetails.push({ id: Date.now().toString(), url: cleanWeightImage, label: 'weight_image' });
+        }
+      }
+
+      if (cleanButtonImage) {
+        const bIdx = updatedDetails.findIndex(d => d.label === 'button_image');
+        if (bIdx >= 0) {
+          updatedDetails[bIdx].url = cleanButtonImage;
+        } else {
+          updatedDetails.push({ id: Date.now().toString() + '_btn', url: cleanButtonImage, label: 'button_image' });
         }
       }
 
@@ -368,6 +424,7 @@ const App: React.FC = () => {
         data: {
           buttonSize: formData.buttonSize || "",
           buttonCount: formData.buttonCount || 0,
+          buttonImage: cleanButtonImage,
           zipperLength: formData.zipperLength || ""
         }
       };
@@ -534,7 +591,7 @@ const App: React.FC = () => {
               />
             </div>
             <div className="lg:col-span-4 print:w-1/2">
-              <FormSection data={formData} onChange={handleFieldChange} onImageUpload={(e) => handleImageUpload(e, 'weight')} />
+              <FormSection data={formData} onChange={handleFieldChange} onImageUpload={(e, target) => handleImageUpload(e, target || 'weight')} />
             </div>
           </div>
         </main>

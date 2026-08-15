@@ -145,9 +145,16 @@ export const SampleCard: React.FC<SampleCardProps> = ({ sample, isCapturing = fa
         <div className="grid grid-cols-2 gap-1.5">
           <div className="bg-teal-100 dark:bg-teal-900/30 border border-teal-200 dark:border-teal-800/50 p-1.5 rounded-xl text-center flex flex-col justify-center min-h-[40px] overflow-hidden">
             <span className="label-text text-[7.5px] font-black text-teal-700 dark:text-teal-400 uppercase tracking-wider mb-0.5">DÜĞME (ÇAP \ ADET)</span>
-            <span className="val-text text-[11px] font-black text-slate-950 dark:text-white truncate px-1 leading-normal pb-0.5">
-              {formatButtonDisplay(sample.buttonSize, sample.buttonCount)}
-            </span>
+            <div className="flex items-center justify-center gap-1.5 flex-wrap">
+              {sample.buttonImage && (
+                <div className="size-4 rounded-md border border-teal-300 shadow-sm overflow-hidden z-10 shrink-0">
+                  <img src={sample.buttonImage} className="w-full h-full object-cover" alt="Düğme Resmi" />
+                </div>
+              )}
+              <span className="val-text text-[11px] font-black text-slate-950 dark:text-white truncate px-1 leading-normal pb-0.5">
+                {formatButtonDisplay(sample.buttonSize, sample.buttonCount)}
+              </span>
+            </div>
           </div>
           <div className="bg-fuchsia-100 dark:bg-fuchsia-900/30 border border-fuchsia-200 dark:border-fuchsia-800/50 p-1.5 rounded-xl text-center flex flex-col justify-center min-h-[40px] overflow-hidden">
             <span className="label-text text-[7.5px] font-black text-fuchsia-700 dark:text-fuchsia-400 uppercase tracking-wider mb-0.5">FERMUAR BOYU</span>

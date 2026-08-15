@@ -109,6 +109,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ userId, onEdit, search
           yarnType: item.yarn_type,
           buttonSize: accDetail?.buttonSize || item.button_size || "",
           buttonCount: parsedButtonCount,
+          buttonImage: item.details?.find((d: any) => d.label === 'button_image')?.url || accDetail?.buttonImage || item.button_image || "",
           zipperLength: accDetail?.zipperLength || item.zipper_length || "",
           notes: item.notes,
           mainImage: item.main_image,
@@ -821,11 +822,28 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ userId, onEdit, search
 
                   {/* 5. Satır: Aksesuarlar (Düğme & Fermuar) */}
                   <div className="grid grid-cols-2 gap-1.5">
-                    <div className="bg-teal-100 dark:bg-teal-900/30 border border-teal-200 dark:border-teal-800/50 p-1.5 rounded-xl text-center flex flex-col justify-center min-h-[40px] overflow-hidden">
+                    <div className="bg-teal-100 dark:bg-teal-900/30 border border-teal-200 dark:border-teal-800/50 p-1.5 rounded-xl text-center flex flex-col justify-center min-h-[40px] overflow-hidden relative group/button">
                       <span className="label-text text-[7.5px] font-black text-teal-700 dark:text-teal-400 uppercase tracking-wider mb-0.5">DÜĞME (ÇAP \ ADET)</span>
-                      <span className="val-text text-[11px] font-black text-slate-950 dark:text-white truncate px-1 leading-normal pb-0.5">
-                        {formatButtonDisplay(sample.buttonSize, sample.buttonCount)}
-                      </span>
+                      <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                        {sample.buttonImage && (
+                          <div 
+                            className="size-4 rounded-md border border-teal-300 shadow-sm overflow-hidden z-10 shrink-0 cursor-pointer"
+                            onClick={(e) => { e.stopPropagation(); openFullImage(sample.buttonImage!); }}
+                          >
+                             <img src={sample.buttonImage} className="w-full h-full object-cover hover:scale-110 transition-transform" alt="Düğme Resmi" />
+                          </div>
+                        )}
+                        <span className="val-text text-[11px] font-black text-slate-950 dark:text-white truncate px-1 leading-normal pb-0.5">
+                          {formatButtonDisplay(sample.buttonSize, sample.buttonCount)}
+                        </span>
+                      </div>
+                      
+                      {/* Zoom Modal on Hover */}
+                      {sample.buttonImage && (
+                        <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-[416px] h-[416px] bg-white rounded-2xl shadow-2xl border border-slate-200 z-[100] opacity-0 invisible group-hover/button:opacity-100 group-hover/button:visible transition-all duration-300 overflow-hidden print:hidden scale-50 group-hover/button:scale-100 origin-bottom pointer-events-none">
+                          <img src={sample.buttonImage} className="w-full h-full object-contain" alt="Düğme Zoom" />
+                        </div>
+                      )}
                     </div>
                     <div className="bg-fuchsia-100 dark:bg-fuchsia-900/30 border border-fuchsia-200 dark:border-fuchsia-800/50 p-1.5 rounded-xl text-center flex flex-col justify-center min-h-[40px] overflow-hidden">
                       <span className="label-text text-[7.5px] font-black text-fuchsia-700 dark:text-fuchsia-400 uppercase tracking-wider mb-0.5">FERMUAR BOYU</span>

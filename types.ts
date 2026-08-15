@@ -19,6 +19,9 @@ export interface SampleData {
   yarnType: string;
   buttonSize?: string; // Düğme Çapı (örn: 24 boy, 18 mm)
   buttonCount?: number; // Düğme Adeti (örn: 5)
+  buttonImage?: string;
+  buttonImageSize?: number;
+  buttonImageDimensions?: { width: number; height: number };
   zipperLength?: string; // Fermuar Boyu (örn: 45 cm)
   notes: string;
   mainImage: string;

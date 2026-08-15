@@ -5,12 +5,13 @@ import { SampleData, YarnType, SizeType } from '../types';
 interface FormSectionProps {
   data: SampleData;
   onChange: (field: keyof SampleData, value: string | number) => void;
-  onImageUpload?: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onImageUpload?: (event: React.ChangeEvent<HTMLInputElement>, target?: 'main' | 'weight' | 'button') => void;
 }
 
 export const FormSection: React.FC<FormSectionProps> = ({ data, onChange, onImageUpload }) => {
   const dateInputRef = useRef<HTMLInputElement>(null);
   const weightInputRef = useRef<HTMLInputElement>(null);
+  const buttonInputRef = useRef<HTMLInputElement>(null);
 
   const handleDateIconClick = () => {
     if (dateInputRef.current) {
@@ -252,19 +253,39 @@ export const FormSection: React.FC<FormSectionProps> = ({ data, onChange, onImag
                 <label className="text-[12px] font-black text-text-primary-light dark:text-text-primary-dark uppercase tracking-wider">Aksesuarlar</label>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3" id="button-container">
                 {/* Düğme Çapı */}
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-black text-text-secondary-light dark:text-text-secondary-dark uppercase tracking-widest pl-1">Düğme Çapı</label>
+                <div className="space-y-1.5 flex flex-col">
+                  <div className="flex items-center justify-between pl-1">
+                    <label className="text-[11px] font-black text-text-secondary-light dark:text-text-secondary-dark uppercase tracking-widest">Düğme Çapı</label>
+                    <button 
+                      type="button"
+                      onClick={() => buttonInputRef.current?.click()}
+                      className="text-primary hover:text-blue-600 transition-colors flex items-center print:hidden"
+                      title="Düğme Resmi Ekle Veya Kopyala Yapıştırın (Ctrl+V)"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">{data.buttonImage ? 'image' : 'add_a_photo'}</span>
+                    </button>
+                    <input type="file" ref={buttonInputRef} onChange={(e) => onImageUpload && onImageUpload(e, 'button')} accept="image/*" className="hidden" capture="environment" />
+                  </div>
                   <div className="relative">
                     <input 
+                      id="button-size-input"
                       type="text" 
                       list="button-sizes"
                       value={data.buttonSize || ''}
                       onChange={(e) => onChange('buttonSize', e.target.value)}
-                      className="block w-full rounded-xl border-slate-300 bg-white text-slate-900 text-[14px] h-11 px-3.5 font-bold"
+                      className={`block w-full rounded-xl border-slate-300 bg-white text-slate-900 text-[14px] h-11 px-3.5 ${data.buttonImage ? 'pl-12' : ''} font-bold`}
                       placeholder="örn: 24"
                     />
+                    {data.buttonImage && (
+                      <div 
+                        className="absolute inset-y-1 left-1 w-9 h-9 rounded-lg bg-cover bg-center border border-slate-200 cursor-pointer"
+                        style={{ backgroundImage: `url(${data.buttonImage})` }}
+                        onClick={() => window.open(data.buttonImage, '_blank')}
+                        title="Düğme Resmini Büyüt"
+                      ></div>
+                    )}
                     <datalist id="button-sizes">
                       <option value="14" />
                       <option value="16" />
@@ -281,7 +302,10 @@ export const FormSection: React.FC<FormSectionProps> = ({ data, onChange, onImag
                       <option value="38" />
                       <option value="40" />
                     </datalist>
-                    <div className="hidden capture-mode:flex input-replacement font-black">{data.buttonSize || '-'}</div>
+                    <div className="hidden capture-mode:flex input-replacement justify-between items-center font-black">
+                      {data.buttonImage && <img src={data.buttonImage} className="h-7 w-7 object-cover rounded-md border border-slate-200" alt="Düğme" />}
+                      <span>{data.buttonSize || '-'}</span>
+                    </div>
                   </div>
                 </div>
 
@@ -290,6 +314,7 @@ export const FormSection: React.FC<FormSectionProps> = ({ data, onChange, onImag
                   <label className="text-[11px] font-black text-text-secondary-light dark:text-text-secondary-dark uppercase tracking-widest pl-1">Düğme Adeti</label>
                   <div className="relative">
                     <input 
+                      id="button-count-input"
                       type="number" 
                       min="0"
                       value={data.buttonCount || ''}
