@@ -137,14 +137,27 @@ export const FormSection: React.FC<FormSectionProps> = ({ data, onChange, onImag
               <div className="space-y-1.5 flex flex-col" id="weight-container">
                 <div className="flex items-center justify-between pl-1">
                   <label className="text-[11px] font-black text-text-secondary-light dark:text-text-secondary-dark uppercase tracking-widest">Gramaj (g)</label>
-                  <button 
-                    type="button"
-                    onClick={() => weightInputRef.current?.click()}
-                    className="text-primary hover:text-blue-600 transition-colors flex items-center print:hidden"
-                    title="Gramaj Resmi Ekle Veya Kopyala Yapıştırın (Ctrl+V)"
-                  >
-                    <span className="material-symbols-outlined text-[16px]">{data.weightImage ? 'image' : 'add_a_photo'}</span>
-                  </button>
+                  <div className="flex items-center gap-1.5 print:hidden">
+                    {data.weightImage && (
+                      <button 
+                        type="button"
+                        onClick={() => onChange('weightImage', '')}
+                        className="text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 p-1 rounded-lg transition-all flex items-center gap-0.5 text-[11px] font-bold"
+                        title="Gramaj Resmini Kaldır"
+                      >
+                        <span className="material-symbols-outlined text-[15px]">delete</span>
+                        <span className="hidden sm:inline">Sil</span>
+                      </button>
+                    )}
+                    <button 
+                      type="button"
+                      onClick={() => weightInputRef.current?.click()}
+                      className="text-primary hover:text-blue-600 p-1 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-colors flex items-center"
+                      title={data.weightImage ? "Gramaj Resmini Değiştir" : "Gramaj Resmi Ekle Veya Kopyala Yapıştırın (Ctrl+V)"}
+                    >
+                      <span className="material-symbols-outlined text-[16px]">{data.weightImage ? 'change_circle' : 'add_a_photo'}</span>
+                    </button>
+                  </div>
                   <input type="file" ref={weightInputRef} onChange={onImageUpload} accept="image/*" className="hidden" capture="environment" />
                 </div>
                 <div className="relative">
@@ -157,11 +170,25 @@ export const FormSection: React.FC<FormSectionProps> = ({ data, onChange, onImag
                     placeholder="0" 
                   />
                   {data.weightImage && (
-                    <div 
-                      className="absolute inset-y-1 left-1 w-10 h-10 rounded-lg bg-cover bg-center border border-slate-200"
-                      style={{ backgroundImage: `url(${data.weightImage})` }}
-                      onClick={() => window.open(data.weightImage, '_blank')}
-                    ></div>
+                    <div className="absolute inset-y-1 left-1 flex items-center group/thumb">
+                      <div 
+                        className="w-10 h-10 rounded-lg bg-cover bg-center border border-slate-200 dark:border-slate-700 cursor-pointer relative overflow-hidden shadow-xs"
+                        style={{ backgroundImage: `url(${data.weightImage})` }}
+                        onClick={() => window.open(data.weightImage, '_blank')}
+                        title="Resmi Yeni Sekmede Aç"
+                      >
+                        <div 
+                          className="absolute inset-0 bg-rose-900/80 opacity-0 group-hover/thumb:opacity-100 transition-opacity flex items-center justify-center text-white"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onChange('weightImage', '');
+                          }}
+                          title="Resmi Sil"
+                        >
+                          <span className="material-symbols-outlined text-[18px]">delete</span>
+                        </div>
+                      </div>
+                    </div>
                   )}
                   <div className="hidden capture-mode:flex input-replacement justify-between items-center text-[18px] font-black">
                      {data.weightImage && <img src={data.weightImage} className="h-8 w-8 object-cover rounded-md border border-slate-200" alt="Gramaj" />}
@@ -258,14 +285,26 @@ export const FormSection: React.FC<FormSectionProps> = ({ data, onChange, onImag
                 <div className="space-y-1.5 flex flex-col">
                   <div className="flex items-center justify-between pl-1">
                     <label className="text-[11px] font-black text-text-secondary-light dark:text-text-secondary-dark uppercase tracking-widest">Düğme Çapı</label>
-                    <button 
-                      type="button"
-                      onClick={() => buttonInputRef.current?.click()}
-                      className="text-primary hover:text-blue-600 transition-colors flex items-center print:hidden"
-                      title="Düğme Resmi Ekle Veya Kopyala Yapıştırın (Ctrl+V)"
-                    >
-                      <span className="material-symbols-outlined text-[16px]">{data.buttonImage ? 'image' : 'add_a_photo'}</span>
-                    </button>
+                    <div className="flex items-center gap-1.5 print:hidden">
+                      {data.buttonImage && (
+                        <button 
+                          type="button"
+                          onClick={() => onChange('buttonImage', '')}
+                          className="text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 p-1 rounded-lg transition-all flex items-center gap-0.5 text-[11px] font-bold"
+                          title="Düğme Resmini Kaldır"
+                        >
+                          <span className="material-symbols-outlined text-[15px]">delete</span>
+                        </button>
+                      )}
+                      <button 
+                        type="button"
+                        onClick={() => buttonInputRef.current?.click()}
+                        className="text-primary hover:text-blue-600 p-1 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-colors flex items-center"
+                        title={data.buttonImage ? "Düğme Resmini Değiştir" : "Düğme Resmi Ekle Veya Kopyala Yapıştırın (Ctrl+V)"}
+                      >
+                        <span className="material-symbols-outlined text-[16px]">{data.buttonImage ? 'change_circle' : 'add_a_photo'}</span>
+                      </button>
+                    </div>
                     <input type="file" ref={buttonInputRef} onChange={(e) => onImageUpload && onImageUpload(e, 'button')} accept="image/*" className="hidden" capture="environment" />
                   </div>
                   <div className="relative">
@@ -279,12 +318,25 @@ export const FormSection: React.FC<FormSectionProps> = ({ data, onChange, onImag
                       placeholder="örn: 24"
                     />
                     {data.buttonImage && (
-                      <div 
-                        className="absolute inset-y-1 left-1 w-9 h-9 rounded-lg bg-cover bg-center border border-slate-200 cursor-pointer"
-                        style={{ backgroundImage: `url(${data.buttonImage})` }}
-                        onClick={() => window.open(data.buttonImage, '_blank')}
-                        title="Düğme Resmini Büyüt"
-                      ></div>
+                      <div className="absolute inset-y-1 left-1 flex items-center group/btn-thumb">
+                        <div 
+                          className="w-9 h-9 rounded-lg bg-cover bg-center border border-slate-200 dark:border-slate-700 cursor-pointer relative overflow-hidden shadow-xs"
+                          style={{ backgroundImage: `url(${data.buttonImage})` }}
+                          onClick={() => window.open(data.buttonImage, '_blank')}
+                          title="Düğme Resmini Büyüt"
+                        >
+                          <div 
+                            className="absolute inset-0 bg-rose-900/80 opacity-0 group-hover/btn-thumb:opacity-100 transition-opacity flex items-center justify-center text-white"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onChange('buttonImage', '');
+                            }}
+                            title="Resmi Sil"
+                          >
+                            <span className="material-symbols-outlined text-[16px]">delete</span>
+                          </div>
+                        </div>
+                      </div>
                     )}
                     <datalist id="button-sizes">
                       <option value="14" />

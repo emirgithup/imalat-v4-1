@@ -114,6 +114,74 @@ const isSearchMatch = (sample: SampleData, term: string): boolean => {
   return false;
 };
 
+/**
+ * Kompakt ve Güvenilir Küçük Görsel Önizleme Bileşeni
+ * Sadece mouse doğrudan bu küçük görsel ikonunun üzerindeyken açılır.
+ * Boyut önceki devasa popup'a göre yarı yarıya küçültülmüştür (~180px).
+ */
+const ThumbnailZoom: React.FC<{
+  src: string;
+  alt: string;
+  type: 'weight' | 'button';
+  onClick: (e: React.MouseEvent) => void;
+}> = ({ src, alt, type, onClick }) => {
+  const [isHovered, setIsHovered] = useState(false);
+
+  const borderColor = type === 'weight' ? 'border-rose-300' : 'border-teal-300';
+  const badgeText = type === 'weight' ? 'Gramaj Görseli' : 'Düğme Görseli';
+  const badgeColor = type === 'weight' 
+    ? 'bg-rose-500 text-white' 
+    : 'bg-teal-600 text-white';
+
+  return (
+    <div 
+      className="relative inline-flex items-center justify-center shrink-0"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <div 
+        role="button"
+        tabIndex={0}
+        onClick={(e) => { 
+          e.stopPropagation(); 
+          setIsHovered(false);
+          onClick(e); 
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.stopPropagation();
+            setIsHovered(false);
+            onClick(e as any);
+          }
+        }}
+        className={`size-4.5 rounded-md border ${borderColor} shadow-xs overflow-hidden cursor-pointer bg-white flex items-center justify-center hover:scale-105 transition-transform print:hidden`}
+        title="Tam ekran büyütmek için tıklayın"
+      >
+        <img src={src} className="w-full h-full object-cover" alt={alt} />
+      </div>
+
+      {/* Sadece mouse ikonun üzerindeyken açılan yarı yarıya küçültülmüş önizleme kutusu */}
+      {isHovered && (
+        <div 
+          className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-44 h-44 bg-white dark:bg-slate-900 rounded-xl shadow-2xl border-2 border-slate-300 dark:border-slate-700 z-[150] pointer-events-none p-1 flex flex-col items-center justify-center animate-in fade-in zoom-in-95 duration-150"
+          style={{ width: '180px', height: '180px' }}
+        >
+          <div className="w-full h-full rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 flex items-center justify-center relative p-1">
+            <img 
+              src={src} 
+              className="max-w-full max-h-full w-auto h-auto object-contain block rounded" 
+              alt={alt} 
+            />
+            <span className={`absolute top-1.5 left-1.5 text-[8px] font-black px-1.5 py-0.5 rounded shadow-sm ${badgeColor}`}>
+              {badgeText}
+            </span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const ReportsPage: React.FC<ReportsPageProps> = ({ 
   userId, 
   onEdit, 
@@ -1077,26 +1145,19 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
                       <span className="label-text text-[7.5px] font-black text-violet-600 uppercase tracking-wider mb-0.5">BEDEN</span>
                       <span className="val-text text-[13px] font-black text-slate-950 dark:text-white leading-normal pb-0.5">{sample.size}</span>
                     </div>
-                    <div className="bg-rose-100 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-800/50 p-1.5 rounded-xl text-center flex flex-col justify-center min-h-[44px] relative group/weight">
+                    <div className="bg-rose-100 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-800/50 p-1.5 rounded-xl text-center flex flex-col justify-center min-h-[44px]">
                       <span className="label-text text-[7.5px] font-black text-rose-600 uppercase tracking-wider mb-0.5">GRAMAJ</span>
                       <div className="flex items-center justify-center gap-1.5 flex-wrap">
                         {sample.weightImage && (
-                          <div 
-                            className="size-4.5 rounded-md border border-rose-300 shadow-sm cursor-pointer overflow-hidden z-10 print:hidden shrink-0" 
-                            onClick={(e) => { e.stopPropagation(); openFullImage(sample.weightImage!); }}
-                          >
-                             <img src={sample.weightImage} className="w-full h-full object-cover hover:scale-110 transition-transform" alt="Gramaj Resmi" />
-                          </div>
+                          <ThumbnailZoom 
+                            src={sample.weightImage} 
+                            alt="Gramaj Resmi" 
+                            type="weight" 
+                            onClick={() => openFullImage(sample.weightImage!)} 
+                          />
                         )}
                         <span className="val-text text-[13px] font-black text-slate-950 dark:text-white leading-normal pb-0.5">{sample.weight}g</span>
                       </div>
-                      
-                      {/* Zoom Modal on Hover */}
-                      {sample.weightImage && (
-                        <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-[416px] h-[416px] bg-white rounded-2xl shadow-2xl border border-slate-200 z-[100] opacity-0 invisible group-hover/weight:opacity-100 group-hover/weight:visible transition-all duration-300 overflow-hidden print:hidden scale-50 group-hover/weight:scale-100 origin-bottom pointer-events-none">
-                          <img src={sample.weightImage} className="w-full h-full object-contain" alt="zoom" />
-                        </div>
-                      )}
                     </div>
                   </div>
 
@@ -1122,28 +1183,21 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
 
                   {/* 5. Satır: Aksesuarlar (Düğme & Fermuar) */}
                   <div className="grid grid-cols-2 gap-1.5">
-                    <div className="bg-teal-100 dark:bg-teal-900/30 border border-teal-200 dark:border-teal-800/50 p-1.5 rounded-xl text-center flex flex-col justify-center min-h-[40px] overflow-hidden relative group/button">
+                    <div className="bg-teal-100 dark:bg-teal-900/30 border border-teal-200 dark:border-teal-800/50 p-1.5 rounded-xl text-center flex flex-col justify-center min-h-[40px] overflow-visible">
                       <span className="label-text text-[7.5px] font-black text-teal-700 dark:text-teal-400 uppercase tracking-wider mb-0.5">DÜĞME (ÇAP \ ADET)</span>
                       <div className="flex items-center justify-center gap-1.5 flex-wrap">
                         {sample.buttonImage && (
-                          <div 
-                            className="size-4 rounded-md border border-teal-300 shadow-sm overflow-hidden z-10 shrink-0 cursor-pointer"
-                            onClick={(e) => { e.stopPropagation(); openFullImage(sample.buttonImage!); }}
-                          >
-                             <img src={sample.buttonImage} className="w-full h-full object-cover hover:scale-110 transition-transform" alt="Düğme Resmi" />
-                          </div>
+                          <ThumbnailZoom 
+                            src={sample.buttonImage} 
+                            alt="Düğme Resmi" 
+                            type="button" 
+                            onClick={() => openFullImage(sample.buttonImage!)} 
+                          />
                         )}
                         <span className="val-text text-[11px] font-black text-slate-950 dark:text-white truncate px-1 leading-normal pb-0.5">
                           {formatButtonDisplay(sample.buttonSize, sample.buttonCount)}
                         </span>
                       </div>
-                      
-                      {/* Zoom Modal on Hover */}
-                      {sample.buttonImage && (
-                        <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-[416px] h-[416px] bg-white rounded-2xl shadow-2xl border border-slate-200 z-[100] opacity-0 invisible group-hover/button:opacity-100 group-hover/button:visible transition-all duration-300 overflow-hidden print:hidden scale-50 group-hover/button:scale-100 origin-bottom pointer-events-none">
-                          <img src={sample.buttonImage} className="w-full h-full object-contain" alt="Düğme Zoom" />
-                        </div>
-                      )}
                     </div>
                     <div className="bg-fuchsia-100 dark:bg-fuchsia-900/30 border border-fuchsia-200 dark:border-fuchsia-800/50 p-1.5 rounded-xl text-center flex flex-col justify-center min-h-[40px] overflow-hidden">
                       <span className="label-text text-[7.5px] font-black text-fuchsia-700 dark:text-fuchsia-400 uppercase tracking-wider mb-0.5">FERMUAR BOYU</span>

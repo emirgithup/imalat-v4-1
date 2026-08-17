@@ -404,6 +404,8 @@ const App: React.FC = () => {
         } else {
           updatedDetails.push({ id: Date.now().toString(), url: cleanWeightImage, label: 'weight_image' });
         }
+      } else {
+        updatedDetails = updatedDetails.filter(d => d.label !== 'weight_image');
       }
 
       if (cleanButtonImage) {
@@ -413,6 +415,8 @@ const App: React.FC = () => {
         } else {
           updatedDetails.push({ id: Date.now().toString() + '_btn', url: cleanButtonImage, label: 'button_image' });
         }
+      } else {
+        updatedDetails = updatedDetails.filter(d => d.label !== 'button_image');
       }
 
       // Aksesuar bilgilerini details içinde sakla (düğme çapı, adeti ve fermuar boyu)
