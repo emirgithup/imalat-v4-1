@@ -3,9 +3,12 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { supabase } from '../supabaseClient';
 import { SampleData } from '../types';
 import { PreviewModal } from './PreviewModal';
+import { isSampleOwnedByCompany } from '../lib/companyManager';
 
 interface ReportsPageProps {
   userId: string;
+  companyId?: string;
+  companyName?: string;
   onEdit: (data: SampleData) => void;
   searchTerm?: string;
   onSearchChange?: (term: string) => void;
@@ -184,6 +187,8 @@ const ThumbnailZoom: React.FC<{
 
 export const ReportsPage: React.FC<ReportsPageProps> = ({ 
   userId, 
+  companyId = 'default',
+  companyName = 'TextileManager',
   onEdit, 
   searchTerm = "", 
   onSearchChange,
@@ -267,7 +272,10 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
         .select('*')
         .order('updated_at', { ascending: false });
       if (error) throw error;
-      setSamples((data || []).map((item: any) => {
+      const companySamples = (data || []).filter((item: any) =>
+        isSampleOwnedByCompany(item, companyId)
+      );
+      setSamples(companySamples.map((item: any) => {
         const accDetail = item.details?.find((d: any) => d.label === 'accessories')?.data;
         const rawButtonCount = accDetail?.buttonCount !== undefined && accDetail?.buttonCount !== '' 
           ? accDetail.buttonCount 
@@ -301,7 +309,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
     } catch (err) { console.error(err); } finally { setLoading(false); }
   };
 
-  useEffect(() => { if (userId) fetchSamples(); }, [userId]);
+  useEffect(() => { if (userId) fetchSamples(); }, [userId, companyId]);
 
   // Dinamik Müşteri Listesi ve Numune Sayıları
   const customerList = useMemo(() => {

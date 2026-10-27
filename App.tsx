@@ -14,6 +14,7 @@ import { Assistant } from './components/Assistant';
 import { SampleCard } from './components/SampleCard';
 import { captureExportCard } from './lib/captureCardUtils';
 import { SampleData, YarnType, SizeType } from './types';
+import { resolveUserCompany, checkIsCompanyAdmin } from './lib/companyManager';
 
 // --- YARDIMCI FONKSİYONLAR ---
 
@@ -98,14 +99,12 @@ const getInitialData = (): SampleData => ({
   isApproved: false
 });
 
-const ADMIN_EMAILS = [
-  'mixemir@gmail.com',
-  'modeller@gmail.com'
-];
-
-export const checkIsAdmin = (email?: string | null): boolean => {
-  if (!email) return false;
-  return ADMIN_EMAILS.includes(email.toLowerCase().trim());
+export const checkIsAdmin = (userOrEmail?: any): boolean => {
+  if (!userOrEmail) return false;
+  if (typeof userOrEmail === 'string') {
+    return checkIsCompanyAdmin({ email: userOrEmail });
+  }
+  return checkIsCompanyAdmin(userOrEmail);
 };
 
 const App: React.FC = () => {
@@ -169,7 +168,7 @@ const App: React.FC = () => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       const user = resolveUser(session?.user ?? null);
       setCurrentUser(user);
-      if (user && !checkIsAdmin(user.email)) {
+      if (user && !checkIsAdmin(user)) {
         setCurrentView('reports');
       }
       setLoadingAuth(false);
@@ -179,7 +178,7 @@ const App: React.FC = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       const user = resolveUser(session?.user ?? null);
       setCurrentUser(user);
-      if (user && !checkIsAdmin(user.email)) {
+      if (user && !checkIsAdmin(user)) {
         setCurrentView('reports');
       }
       setLoadingAuth(false);
@@ -469,6 +468,24 @@ const App: React.FC = () => {
         updatedDetails.push(accObj as any);
       }
 
+      // Şirket bilgilerini details içinde sakla (şirketler arası veri izolasyonu için)
+      const currentCompany = resolveUserCompany(currentUser);
+      const compIdx = updatedDetails.findIndex(d => d.label === 'company_info');
+      const compObj = {
+        id: 'company_info',
+        url: '',
+        label: 'company_info',
+        data: {
+          companyId: currentCompany.companyId,
+          companyName: currentCompany.companyName
+        }
+      };
+      if (compIdx >= 0) {
+        updatedDetails[compIdx] = compObj as any;
+      } else {
+        updatedDetails.push(compObj as any);
+      }
+
       const dbPayload = {
         user_id: currentUser.id,
         model_code: formData.modelCode,
@@ -553,7 +570,8 @@ const App: React.FC = () => {
 
   if (!currentUser) return <LoginPage />;
 
-  const isAdmin = checkIsAdmin(currentUser?.email);
+  const userCompany = resolveUserCompany(currentUser);
+  const isAdmin = userCompany.role === 'admin';
 
   return (
     <>
@@ -561,6 +579,7 @@ const App: React.FC = () => {
       <Header 
         onLogout={handleLogout} 
         userEmail={currentUser.email || ''} 
+        companyName={userCompany.companyName}
         currentPage={currentView}
         searchTerm={searchTerm}
         onSearch={setSearchTerm}
@@ -634,6 +653,8 @@ const App: React.FC = () => {
         <main className="flex-1 w-full max-w-[1440px] mx-auto p-4 md:p-6 lg:p-10">
           <ReportsPage 
             userId={currentUser.id} 
+            companyId={userCompany.companyId}
+            companyName={userCompany.companyName}
             onEdit={handleEditSample} 
             searchTerm={searchTerm} 
             onSearchChange={setSearchTerm}

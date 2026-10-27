@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 interface HeaderProps {
   onLogout?: () => void;
   userEmail?: string;
+  companyName?: string;
   onNavigate?: (page: 'home' | 'reports') => void;
   currentPage?: 'home' | 'reports';
   searchTerm?: string;
@@ -14,6 +15,7 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({ 
   onLogout, 
   userEmail, 
+  companyName = "TextileManager",
   onNavigate, 
   currentPage = 'home',
   searchTerm = "",
@@ -39,7 +41,9 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="size-8 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
             <span className="material-symbols-outlined">dataset</span>
           </div>
-          <h2 className="text-lg font-bold leading-tight tracking-tight">TextileManager</h2>
+          <div className="flex flex-col">
+            <h2 className="text-lg font-bold leading-tight tracking-tight">{companyName}</h2>
+          </div>
         </div>
         <nav className="hidden md:flex items-center gap-6">
           {isAdmin && (
@@ -90,9 +94,13 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
             <div className="hidden lg:flex items-center gap-1.5">
               <span className="text-xs font-bold text-text-primary-light dark:text-text-primary-dark">{userEmail?.split('@')[0] || 'Kullanıcı'}</span>
-              {isAdmin && (
+              {isAdmin ? (
                 <span className="text-[9px] font-black uppercase tracking-wider bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 px-1.5 py-0.5 rounded border border-indigo-200 dark:border-indigo-800">
                   Yönetici
+                </span>
+              ) : (
+                <span className="text-[9px] font-black uppercase tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">
+                  Kullanıcı
                 </span>
               )}
             </div>
@@ -105,13 +113,17 @@ export const Header: React.FC<HeaderProps> = ({
                 className="fixed inset-0 z-10" 
                 onClick={() => setShowProfileMenu(false)}
               ></div>
-              <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-card-dark border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-20 py-2 animate-in fade-in zoom-in duration-200">
-                <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-800 mb-2">
-                  <div className="flex items-center justify-between">
-                    <p className="text-[10px] font-bold text-text-secondary-light dark:text-text-secondary-dark uppercase tracking-widest">Oturum Açan</p>
-                    {isAdmin && (
+              <div className="absolute right-0 mt-2 w-60 bg-white dark:bg-card-dark border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-20 py-2 animate-in fade-in zoom-in duration-200">
+                <div className="px-4 py-2.5 border-b border-slate-100 dark:border-slate-800 mb-2">
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-[10px] font-extrabold text-primary uppercase tracking-widest truncate">{companyName}</p>
+                    {isAdmin ? (
                       <span className="text-[9px] font-black uppercase tracking-wider bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 px-1.5 py-0.5 rounded border border-indigo-200 dark:border-indigo-800">
                         Yönetici
+                      </span>
+                    ) : (
+                      <span className="text-[9px] font-black uppercase tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">
+                        Kullanıcı
                       </span>
                     )}
                   </div>
