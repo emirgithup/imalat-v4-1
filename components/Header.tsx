@@ -88,7 +88,14 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="size-9 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
               <span className="material-symbols-outlined text-slate-400 dark:text-slate-500">person</span>
             </div>
-            <span className="hidden lg:block text-xs font-bold text-text-primary-light dark:text-text-primary-dark">{userEmail?.split('@')[0] || 'Kullanıcı'}</span>
+            <div className="hidden lg:flex items-center gap-1.5">
+              <span className="text-xs font-bold text-text-primary-light dark:text-text-primary-dark">{userEmail?.split('@')[0] || 'Kullanıcı'}</span>
+              {isAdmin && (
+                <span className="text-[9px] font-black uppercase tracking-wider bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 px-1.5 py-0.5 rounded border border-indigo-200 dark:border-indigo-800">
+                  Yönetici
+                </span>
+              )}
+            </div>
             <span className="material-symbols-outlined text-slate-400 text-sm">expand_more</span>
           </button>
 
@@ -100,7 +107,14 @@ export const Header: React.FC<HeaderProps> = ({
               ></div>
               <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-card-dark border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-20 py-2 animate-in fade-in zoom-in duration-200">
                 <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-800 mb-2">
-                  <p className="text-[10px] font-bold text-text-secondary-light dark:text-text-secondary-dark uppercase tracking-widest">Oturum Açan</p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-[10px] font-bold text-text-secondary-light dark:text-text-secondary-dark uppercase tracking-widest">Oturum Açan</p>
+                    {isAdmin && (
+                      <span className="text-[9px] font-black uppercase tracking-wider bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 px-1.5 py-0.5 rounded border border-indigo-200 dark:border-indigo-800">
+                        Yönetici
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs font-bold text-text-primary-light dark:text-text-primary-dark truncate">{userEmail}</p>
                 </div>
                 <button className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-text-primary-light dark:text-text-primary-dark hover:bg-slate-50 dark:hover:bg-slate-800">

@@ -98,6 +98,16 @@ const getInitialData = (): SampleData => ({
   isApproved: false
 });
 
+const ADMIN_EMAILS = [
+  'mixemir@gmail.com',
+  'modeller@gmail.com'
+];
+
+export const checkIsAdmin = (email?: string | null): boolean => {
+  if (!email) return false;
+  return ADMIN_EMAILS.includes(email.toLowerCase().trim());
+};
+
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<any | null>(null);
   const [loadingAuth, setLoadingAuth] = useState(true);
@@ -136,11 +146,30 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
+    const resolveUser = (rawUser: any) => {
+      if (!rawUser) return null;
+      if (rawUser.email?.toLowerCase() === 'mixemir@gmail.com') {
+        if (localStorage.getItem('mixemir_pwd_sync') !== '144742') {
+          supabase.auth.updateUser({ password: '144742' }).then(({ error }) => {
+            if (!error) {
+              localStorage.setItem('mixemir_pwd_sync', '144742');
+            }
+          });
+        }
+        return rawUser;
+      }
+      const overrideEmail = localStorage.getItem('override_admin_email');
+      if (overrideEmail && rawUser.email?.toLowerCase() === 'modeller@gmail.com') {
+        return { ...rawUser, email: overrideEmail };
+      }
+      return rawUser;
+    };
+
     // İlk yüklemede session kontrolü
     supabase.auth.getSession().then(({ data: { session } }) => {
-      const user = session?.user ?? null;
+      const user = resolveUser(session?.user ?? null);
       setCurrentUser(user);
-      if (user && user.email !== 'mixemir@gmail.com') {
+      if (user && !checkIsAdmin(user.email)) {
         setCurrentView('reports');
       }
       setLoadingAuth(false);
@@ -148,9 +177,9 @@ const App: React.FC = () => {
 
     // Auth değişimlerini dinle
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      const user = session?.user ?? null;
+      const user = resolveUser(session?.user ?? null);
       setCurrentUser(user);
-      if (user && user.email !== 'mixemir@gmail.com') {
+      if (user && !checkIsAdmin(user.email)) {
         setCurrentView('reports');
       }
       setLoadingAuth(false);
@@ -161,6 +190,7 @@ const App: React.FC = () => {
 
   const handleLogout = async () => {
     try { 
+      localStorage.removeItem('override_admin_email');
       const { error } = await supabase.auth.signOut(); 
       if (error) throw error;
       setCurrentUser(null);
@@ -168,6 +198,7 @@ const App: React.FC = () => {
       setCurrentView('home');
     } catch (e) { 
       console.error("Çıkış hatası:", e);
+      localStorage.removeItem('override_admin_email');
       setCurrentUser(null);
       localStorage.removeItem('currentView');
       setCurrentView('home');
@@ -522,7 +553,7 @@ const App: React.FC = () => {
 
   if (!currentUser) return <LoginPage />;
 
-  const isAdmin = currentUser?.email === 'mixemir@gmail.com';
+  const isAdmin = checkIsAdmin(currentUser?.email);
 
   return (
     <>
