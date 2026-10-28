@@ -5,6 +5,7 @@ interface ImageSectionProps {
   mainImage: string;
   isApproved: boolean;
   modelCode: string;
+  customerName?: string;
   imageSize?: number;
   imageDimensions?: { width: number; height: number };
   onImageUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
@@ -17,6 +18,7 @@ export const ImageSection: React.FC<ImageSectionProps> = ({
   mainImage, 
   isApproved, 
   modelCode,
+  customerName,
   imageSize,
   imageDimensions,
   onImageUpload, 
@@ -52,16 +54,17 @@ export const ImageSection: React.FC<ImageSectionProps> = ({
             )}
             
             {/* Onay Durumu Butonu */}
-            <div className="absolute top-6 left-6 z-40 print:hidden">
+            <div className="absolute top-3 left-3 sm:top-6 sm:left-6 z-40 print:hidden">
               <button 
+                type="button"
                 onClick={onToggleApproval}
-                className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-[13px] font-black shadow-2xl transition-all border-2 ${
+                className={`flex items-center gap-1.5 sm:gap-2 px-4 py-2 sm:px-6 sm:py-2.5 rounded-full text-[11px] sm:text-[13px] font-black shadow-2xl transition-all border-2 ${
                   isApproved 
-                  ? 'bg-emerald-600 text-white border-emerald-400 ring-8 ring-emerald-500/20' 
+                  ? 'bg-emerald-600 text-white border-emerald-400 ring-4 sm:ring-8 ring-emerald-500/20' 
                   : 'bg-white/95 text-slate-800 border-white hover:bg-white hover:scale-105'
                 }`}
               >
-                <span className="material-symbols-outlined text-[20px] font-bold">
+                <span className="material-symbols-outlined text-[16px] sm:text-[20px] font-bold">
                   {isApproved ? 'verified' : 'pending_actions'}
                 </span>
                 {isApproved ? 'ONAYLANDI' : 'ONAY BEKLİYOR'}
@@ -80,58 +83,59 @@ export const ImageSection: React.FC<ImageSectionProps> = ({
                   className="w-full h-full object-contain"
                 />
             ) : (
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-300 dark:text-slate-600 p-8 text-center">
-                    <span className="material-symbols-outlined text-[80px] mb-4">photo_camera</span>
-                    <p className="text-sm font-black opacity-60 uppercase tracking-widest">FOTOĞRAF ÇEK / SEÇ</p>
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-300 dark:text-slate-600 p-6 sm:p-8 pb-24 sm:pb-8 text-center">
+                    <span className="material-symbols-outlined text-[56px] sm:text-[80px] mb-2 sm:mb-4">photo_camera</span>
+                    <p className="text-xs sm:text-sm font-black opacity-60 uppercase tracking-widest">FOTOĞRAF ÇEK / SEÇ</p>
                 </div>
             )}
             
-            <div className={`absolute inset-0 bg-black/0 ${mainImage ? 'group-hover:bg-black/40' : ''} transition-colors duration-300 flex items-center justify-center print:hidden`}>
-                <input type="file" ref={mainInputRef} onChange={onImageUpload} accept="image/*" className="hidden" capture="environment" />
+            <div className={`absolute inset-0 bg-black/0 ${mainImage ? 'group-hover:bg-black/40' : ''} transition-colors duration-300 flex items-center justify-center pb-20 sm:pb-0 print:hidden`}>
+                <input type="file" ref={mainInputRef} onChange={onImageUpload} accept="image/*" className="hidden" />
                 <button 
+                    type="button"
                     onClick={() => mainInputRef.current?.click()}
-                    className={`${mainImage ? 'opacity-0 group-hover:opacity-100' : 'opacity-100'} transition-all duration-300 bg-white text-text-primary-light px-8 py-4 rounded-2xl font-black text-sm shadow-2xl flex items-center gap-3 hover:bg-slate-50 z-30`}
+                    className={`${mainImage ? 'opacity-0 group-hover:opacity-100' : 'opacity-100'} transition-all duration-300 bg-white text-text-primary-light px-5 py-3 sm:px-8 sm:py-4 rounded-2xl font-black text-xs sm:text-sm shadow-2xl flex items-center gap-2 sm:gap-3 hover:bg-slate-50 z-30`}
                 >
-                    <span className="material-symbols-outlined">photo_camera</span>
+                    <span className="material-symbols-outlined text-[20px] sm:text-[24px]">photo_camera</span>
                     {mainImage ? 'RESMİ DEĞİŞTİR' : 'RESİM SEÇ'}
                 </button>
             </div>
 
             {/* Bilgi Etiketleri - SOL ALTA SABİTLENDİ */}
-            <div className="absolute bottom-8 left-8 z-40 flex flex-col gap-3 pointer-events-none">
-                <div className="bg-indigo-50/95 backdrop-blur-md border-[2.5px] border-indigo-200 text-indigo-950 px-6 py-3 rounded-2xl shadow-2xl flex flex-col min-w-[140px]">
-                  <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-1">MODEL</span>
-                  <div className="font-black text-2xl tracking-tight uppercase leading-normal pb-0.5">
+            <div className="absolute bottom-3 left-3 sm:bottom-8 sm:left-8 z-40 flex flex-col gap-1.5 sm:gap-3 pointer-events-none max-w-[52%] sm:max-w-[55%]">
+                <div className="bg-indigo-50/95 backdrop-blur-md border-2 sm:border-[2.5px] border-indigo-200 text-indigo-950 px-3 py-1.5 sm:px-6 sm:py-3 rounded-xl sm:rounded-2xl shadow-xl sm:shadow-2xl flex flex-col min-w-[100px] sm:min-w-[140px]">
+                  <span className="text-[8px] sm:text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-0.5 sm:mb-1">MODEL</span>
+                  <div className="font-black text-sm sm:text-2xl tracking-tight uppercase leading-tight sm:leading-normal truncate pb-0.5">
                     {modelCode || 'BELİRTİLMEDİ'}
                   </div>
                 </div>
                 
                 {/* Müşteri Etiketi */}
-                <div className="bg-cyan-50/95 backdrop-blur-md border-[2.5px] border-cyan-200 text-cyan-950 px-6 py-3 rounded-2xl shadow-2xl flex flex-col min-w-[140px]">
-                  <span className="text-[10px] font-black text-cyan-600 uppercase tracking-widest mb-1">MÜŞTERİ</span>
-                  <div className="font-black text-[16px] uppercase leading-normal pb-0.5">
-                    {modelCode ? 'NUMUNE KARTI' : 'MÜŞTERİ SEÇİN'}
+                <div className="bg-cyan-50/95 backdrop-blur-md border-2 sm:border-[2.5px] border-cyan-200 text-cyan-950 px-3 py-1.5 sm:px-6 sm:py-3 rounded-xl sm:rounded-2xl shadow-xl sm:shadow-2xl flex flex-col min-w-[100px] sm:min-w-[140px]">
+                  <span className="text-[8px] sm:text-[10px] font-black text-cyan-600 uppercase tracking-widest mb-0.5 sm:mb-1">MÜŞTERİ</span>
+                  <div className="font-black text-xs sm:text-[16px] uppercase leading-tight sm:leading-normal truncate pb-0.5">
+                    {customerName || (modelCode ? 'NUMUNE KARTI' : 'MÜŞTERİ SEÇİN')}
                   </div>
                 </div>
             </div>
 
             {/* Mühür - SAĞ ALTTA SABİTLENDİ */}
-            <div className="stamp-container absolute bottom-8 right-8 z-40 pointer-events-none">
-                <div className={`relative ${isApproved ? 'bg-emerald-50/95' : 'bg-amber-50/95'} backdrop-blur-md border-[3.5px] ${isApproved ? 'border-emerald-500' : 'border-amber-500'} rounded-2xl p-4 shadow-2xl flex flex-col items-center justify-center gap-2 transform rotate-3 border-double origin-bottom-right min-w-[170px]`}>
+            <div className="stamp-container absolute bottom-3 right-3 sm:bottom-8 sm:right-8 z-40 pointer-events-none">
+                <div className={`relative ${isApproved ? 'bg-emerald-50/95' : 'bg-amber-50/95'} backdrop-blur-md border-[2.5px] sm:border-[3.5px] ${isApproved ? 'border-emerald-500' : 'border-amber-500'} rounded-xl sm:rounded-2xl p-2 sm:p-4 shadow-xl sm:shadow-2xl flex flex-col items-center justify-center gap-1 sm:gap-2 transform rotate-3 border-double origin-bottom-right min-w-[105px] sm:min-w-[170px]`}>
                   {/* Status Badge - Dynamic Width */}
-                  <div className={`w-auto inline-flex items-center justify-center rounded-full ${isApproved ? 'bg-emerald-500' : 'bg-amber-500'} text-slate-950 shadow-md py-1.5 px-5`}>
-                     <span className="text-[12px] font-black uppercase tracking-widest leading-none whitespace-nowrap">
+                  <div className={`w-auto inline-flex items-center justify-center rounded-full ${isApproved ? 'bg-emerald-500' : 'bg-amber-500'} text-slate-950 shadow-md py-1 px-2.5 sm:py-1.5 sm:px-5`}>
+                     <span className="text-[9px] sm:text-[12px] font-black uppercase tracking-widest leading-none whitespace-nowrap">
                         {isApproved ? 'ONAYLI' : 'BEKLEMEDE'}
                      </span>
                   </div>
                   
-                  <div className="flex items-center gap-3 mt-1">
+                  <div className="flex items-center gap-1.5 sm:gap-3 mt-0.5 sm:mt-1">
                     {isApproved && (
-                      <span className={`material-symbols-outlined text-[36px] text-emerald-600 font-bold`}>
+                      <span className={`material-symbols-outlined text-[20px] sm:text-[36px] text-emerald-600 font-bold`}>
                         verified
                       </span>
                     )}
-                    <span className={`${isApproved ? 'text-emerald-950' : 'text-amber-950'} font-black text-[14px] leading-tight uppercase text-center whitespace-pre-line`}>
+                    <span className={`${isApproved ? 'text-emerald-950' : 'text-amber-950'} font-black text-[10px] sm:text-[14px] leading-tight uppercase text-center whitespace-pre-line`}>
                       {isApproved ? 'İMALAT İÇİN\nUYGUNDUR' : 'ONAY\nBEKLENİYOR'}
                     </span>
                   </div>

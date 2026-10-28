@@ -642,6 +642,7 @@ const App: React.FC = () => {
                 mainImage={formData.mainImage} 
                 isApproved={formData.isApproved}
                 modelCode={formData.modelCode}
+                customerName={formData.customerName}
                 imageSize={formData.mainImageSize}
                 imageDimensions={formData.mainImageDimensions}
                 onImageUpload={handleImageUpload} 
@@ -651,7 +652,12 @@ const App: React.FC = () => {
               />
             </div>
             <div className="lg:col-span-4 print:w-1/2">
-              <FormSection data={formData} onChange={handleFieldChange} onImageUpload={(e, target) => handleImageUpload(e, target || 'weight')} />
+              <FormSection 
+                data={formData} 
+                companyName={userCompany.companyName}
+                onChange={handleFieldChange} 
+                onImageUpload={(e, target) => handleImageUpload(e, target || 'weight')} 
+              />
             </div>
           </div>
         </main>

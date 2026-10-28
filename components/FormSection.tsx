@@ -4,11 +4,12 @@ import { SampleData, YarnType, SizeType } from '../types';
 
 interface FormSectionProps {
   data: SampleData;
+  companyName?: string;
   onChange: (field: keyof SampleData, value: string | number) => void;
   onImageUpload?: (event: React.ChangeEvent<HTMLInputElement>, target?: 'main' | 'weight' | 'button') => void;
 }
 
-export const FormSection: React.FC<FormSectionProps> = ({ data, onChange, onImageUpload }) => {
+export const FormSection: React.FC<FormSectionProps> = ({ data, companyName, onChange, onImageUpload }) => {
   const dateInputRef = useRef<HTMLInputElement>(null);
   const weightInputRef = useRef<HTMLInputElement>(null);
   const buttonInputRef = useRef<HTMLInputElement>(null);
@@ -35,6 +36,10 @@ export const FormSection: React.FC<FormSectionProps> = ({ data, onChange, onImag
     return `${parts[2]}.${parts[1]}.${parts[0]}`;
   };
 
+  const displayTitle = companyName && companyName !== 'TextileManager'
+    ? `${companyName} Teknik Özellikler`
+    : 'Teknik Özellikler';
+
   return (
     <div className="h-full">
       <div className="resizable-card relative bg-card-light dark:bg-card-dark rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden print:shadow-none print:border-none min-h-full">
@@ -57,7 +62,7 @@ export const FormSection: React.FC<FormSectionProps> = ({ data, onChange, onImag
         {/* İçerik Katmanı */}
         <div className="relative z-10 h-full flex flex-col backdrop-blur-[0.5px]">
           <div className="px-6 py-5 border-b border-slate-200/50 dark:border-slate-700/50 flex justify-between items-center bg-white/70 dark:bg-slate-800/70 print:px-0 print:py-2 print:bg-white print:border-b-2 print:border-slate-900">
-            <h3 className="text-text-primary-light dark:text-text-primary-dark font-black text-[15px] print:text-xs uppercase tracking-tighter">KENZA'A Teknik Özellikler</h3>
+            <h3 className="text-text-primary-light dark:text-text-primary-dark font-black text-[15px] print:text-xs uppercase tracking-tighter">{displayTitle}</h3>
             <span className="material-symbols-outlined text-text-secondary-light dark:text-text-secondary-dark cursor-pointer hover:text-primary print:hidden">more_horiz</span>
           </div>
           
