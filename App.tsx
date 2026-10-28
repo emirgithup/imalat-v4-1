@@ -370,22 +370,11 @@ const App: React.FC = () => {
   const handleToggleApproval = useCallback(() => {
     setFormData(prev => {
       const nextApprovedState = !prev.isApproved;
-      let updatedNotes = prev.notes;
-      const approvalText = "NUMUNE SERİ ÜRETİME GİRMİŞTİR";
-      const pendingText = "ONAY BEKLİYOR";
-
-      if (nextApprovedState) {
-        updatedNotes = updatedNotes.replace(pendingText, "").trim();
-        if (!updatedNotes.includes(approvalText)) {
-          updatedNotes = updatedNotes ? `${updatedNotes}\n\n${approvalText}` : approvalText;
-        }
-      } else {
-        updatedNotes = updatedNotes.replace(approvalText, "").trim();
-        if (!updatedNotes.includes(pendingText)) {
-          updatedNotes = updatedNotes ? `${updatedNotes}\n\n${pendingText}` : pendingText;
-        }
-      }
-      return { ...prev, isApproved: nextApprovedState, notes: updatedNotes.trim() };
+      const cleanedNotes = (prev.notes || '')
+        .replace(/NUMUNE SERİ ÜRETİME GİRMİŞTİR/g, '')
+        .replace(/ONAY BEKLİYOR/g, '')
+        .trim();
+      return { ...prev, isApproved: nextApprovedState, notes: cleanedNotes };
     });
   }, []);
 

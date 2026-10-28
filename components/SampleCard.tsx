@@ -40,7 +40,7 @@ export const SampleCard: React.FC<SampleCardProps> = ({ sample, isCapturing = fa
   return (
     <div 
       id={id || `sample-card-${sample.id || 'new'}`} 
-      className="bg-white dark:bg-card-dark rounded-[24px] shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col relative transition-all mx-auto w-full duration-300 hover:shadow-lg hover:-translate-y-1 hover:z-[60]"
+      className="bg-white dark:bg-card-dark rounded-[24px] shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col relative transition-all mx-auto w-full duration-300 hover:shadow-lg hover:-translate-y-1 hover:z-30"
     >
       {isCapturing && (
         <div className="absolute inset-0 z-50 bg-white/95 flex items-center justify-center font-black text-[10px] text-indigo-600 animate-pulse uppercase tracking-widest rounded-[24px]">

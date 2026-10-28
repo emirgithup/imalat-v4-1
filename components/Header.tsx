@@ -32,7 +32,7 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="flex items-center justify-between whitespace-nowrap border-b border-solid border-slate-200 dark:border-slate-800 bg-card-light dark:bg-card-dark px-6 py-3 sticky top-0 z-50 print:hidden">
+    <header className="flex items-center justify-between whitespace-nowrap border-b border-solid border-slate-200 dark:border-slate-800 bg-card-light dark:bg-card-dark px-6 py-3 sticky top-0 z-[100] print:hidden">
       <div className="flex items-center gap-8">
         <div 
           className="flex items-center gap-3 text-text-primary-light dark:text-text-primary-dark cursor-pointer"

@@ -166,7 +166,7 @@ const ThumbnailZoom: React.FC<{
       {/* Sadece mouse ikonun üzerindeyken açılan yarı yarıya küçültülmüş önizleme kutusu */}
       {isHovered && (
         <div 
-          className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-44 h-44 bg-white dark:bg-slate-900 rounded-xl shadow-2xl border-2 border-slate-300 dark:border-slate-700 z-[150] pointer-events-none p-1 flex flex-col items-center justify-center animate-in fade-in zoom-in-95 duration-150"
+          className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-44 h-44 bg-white dark:bg-slate-900 rounded-xl shadow-2xl border-2 border-slate-300 dark:border-slate-700 z-40 pointer-events-none p-1 flex flex-col items-center justify-center animate-in fade-in zoom-in-95 duration-150"
           style={{ width: '180px', height: '180px' }}
         >
           <div className="w-full h-full rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 flex items-center justify-center relative p-1">
@@ -1069,7 +1069,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
               
               <div 
                 id={`sample-card-${sample.id}`} 
-                className="bg-white dark:bg-card-dark rounded-[24px] shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col relative transition-all mx-auto w-full duration-300 hover:shadow-lg hover:-translate-y-1 hover:z-[60]"
+                className="bg-white dark:bg-card-dark rounded-[24px] shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col relative transition-all mx-auto w-full duration-300 hover:shadow-lg hover:-translate-y-1 hover:z-30"
               >
                 {isCapturing === sample.id && (
                   <div className="absolute inset-0 z-50 bg-white/95 flex items-center justify-center font-black text-[10px] text-indigo-600 animate-pulse uppercase tracking-widest rounded-[24px]">
