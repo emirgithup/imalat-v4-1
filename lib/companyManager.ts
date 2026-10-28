@@ -1,3 +1,5 @@
+import { safeStorage } from './safeStorage';
+
 export interface CompanyAccount {
   email: string;
   role: 'admin' | 'user';
@@ -43,7 +45,7 @@ export const BUILTIN_COMPANIES: CompanyInfo[] = [
 
 export const getCustomCompanies = (): CompanyInfo[] => {
   try {
-    const raw = localStorage.getItem(CUSTOM_COMPANIES_STORAGE_KEY);
+    const raw = safeStorage.getItem(CUSTOM_COMPANIES_STORAGE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? parsed : [];
@@ -60,7 +62,7 @@ export const saveCustomCompany = (company: CompanyInfo): void => {
   } else {
     existing.push(company);
   }
-  localStorage.setItem(CUSTOM_COMPANIES_STORAGE_KEY, JSON.stringify(existing));
+  safeStorage.setItem(CUSTOM_COMPANIES_STORAGE_KEY, JSON.stringify(existing));
 };
 
 export const getAllCompanies = (): CompanyInfo[] => {

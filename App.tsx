@@ -15,6 +15,7 @@ import { SampleCard } from './components/SampleCard';
 import { captureExportCard } from './lib/captureCardUtils';
 import { SampleData, YarnType, SizeType } from './types';
 import { resolveUserCompany, checkIsCompanyAdmin } from './lib/companyManager';
+import { safeStorage } from './lib/safeStorage';
 
 // --- YARDIMCI FONKSİYONLAR ---
 
@@ -111,12 +112,12 @@ const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<any | null>(null);
   const [loadingAuth, setLoadingAuth] = useState(true);
   const [currentView, setCurrentView] = useState<'home' | 'reports'>(() => {
-    const saved = localStorage.getItem('currentView');
+    const saved = safeStorage.getItem('currentView');
     return (saved === 'home' || saved === 'reports') ? saved : 'home';
   });
 
   useEffect(() => {
-    localStorage.setItem('currentView', currentView);
+    safeStorage.setItem('currentView', currentView);
   }, [currentView]);
 
   const [formData, setFormData] = useState<SampleData>(getInitialData());
@@ -145,19 +146,24 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
+    let isMounted = true;
+    const authTimeout = setTimeout(() => {
+      if (isMounted) setLoadingAuth(false);
+    }, 3500);
+
     const resolveUser = (rawUser: any) => {
       if (!rawUser) return null;
       if (rawUser.email?.toLowerCase() === 'mixemir@gmail.com') {
-        if (localStorage.getItem('mixemir_pwd_sync') !== '144742') {
+        if (safeStorage.getItem('mixemir_pwd_sync') !== '144742') {
           supabase.auth.updateUser({ password: '144742' }).then(({ error }) => {
             if (!error) {
-              localStorage.setItem('mixemir_pwd_sync', '144742');
+              safeStorage.setItem('mixemir_pwd_sync', '144742');
             }
-          });
+          }).catch(() => {});
         }
         return rawUser;
       }
-      const overrideEmail = localStorage.getItem('override_admin_email');
+      const overrideEmail = safeStorage.getItem('override_admin_email');
       if (overrideEmail && rawUser.email?.toLowerCase() === 'modeller@gmail.com') {
         return { ...rawUser, email: overrideEmail };
       }
@@ -165,17 +171,24 @@ const App: React.FC = () => {
     };
 
     // İlk yüklemede session kontrolü
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      const user = resolveUser(session?.user ?? null);
-      setCurrentUser(user);
-      if (user && !checkIsAdmin(user)) {
-        setCurrentView('reports');
-      }
-      setLoadingAuth(false);
-    });
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        if (!isMounted) return;
+        const user = resolveUser(session?.user ?? null);
+        setCurrentUser(user);
+        if (user && !checkIsAdmin(user)) {
+          setCurrentView('reports');
+        }
+        setLoadingAuth(false);
+      })
+      .catch((err) => {
+        console.warn("Session kontrol hatası:", err);
+        if (isMounted) setLoadingAuth(false);
+      });
 
     // Auth değişimlerini dinle
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!isMounted) return;
       const user = resolveUser(session?.user ?? null);
       setCurrentUser(user);
       if (user && !checkIsAdmin(user)) {
@@ -184,22 +197,26 @@ const App: React.FC = () => {
       setLoadingAuth(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      clearTimeout(authTimeout);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const handleLogout = async () => {
     try { 
-      localStorage.removeItem('override_admin_email');
+      safeStorage.removeItem('override_admin_email');
       const { error } = await supabase.auth.signOut(); 
       if (error) throw error;
       setCurrentUser(null);
-      localStorage.removeItem('currentView');
+      safeStorage.removeItem('currentView');
       setCurrentView('home');
     } catch (e) { 
       console.error("Çıkış hatası:", e);
-      localStorage.removeItem('override_admin_email');
+      safeStorage.removeItem('override_admin_email');
       setCurrentUser(null);
-      localStorage.removeItem('currentView');
+      safeStorage.removeItem('currentView');
       setCurrentView('home');
     }
   };

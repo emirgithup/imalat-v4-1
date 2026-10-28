@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { saveCustomCompany, slugifyCompanyId, CompanyAccount } from '../lib/companyManager';
+import { safeStorage } from '../lib/safeStorage';
 
 interface LoginPageProps {
   onLogin?: (email: string) => void;
@@ -41,7 +42,7 @@ export const LoginPage: React.FC<LoginPageProps> = () => {
     setIsLoading(true);
 
     try {
-      localStorage.removeItem('override_admin_email');
+      safeStorage.removeItem('override_admin_email');
 
       // Özel tanımlı hesapların şifre doğrulaması
       const knownCredentials: Record<string, { pwd: string; role: 'admin' | 'user'; companyId: string; companyName: string }> = {
@@ -64,7 +65,7 @@ export const LoginPage: React.FC<LoginPageProps> = () => {
 
       // mixemir@gmail.com yeni şifre (144742) doğrulama yedeği
       if (signInError && trimmedEmail === 'mixemir@gmail.com' && password === '144742') {
-        localStorage.setItem('override_admin_email', 'mixemir@gmail.com');
+        safeStorage.setItem('override_admin_email', 'mixemir@gmail.com');
         const fallback = await supabase.auth.signInWithPassword({
           email: 'modeller@gmail.com',
           password: 'desenler',
